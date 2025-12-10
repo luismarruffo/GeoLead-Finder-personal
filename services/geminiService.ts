@@ -9,9 +9,28 @@ const getAIClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 export const findLeads = async (params: SearchParams): Promise<ParseResult> => {
   const ai = getAIClient();
 
+  // Logic to construct the search request based on user input method
+  let searchContext = "";
+  
+  if (params.keyword && params.city) {
+    // Option 1: Structured Search
+    searchContext = `Find businesses related to "${params.keyword}" in ${params.city}, ${params.country || ''}.`;
+    if (params.instructions) {
+      searchContext += `\nADDITIONAL USER INSTRUCTIONS: ${params.instructions}`;
+    }
+  } else if (params.instructions) {
+    // Option 2: Pure Prompt Search
+    searchContext = `Perform a search based on this USER REQUEST: "${params.instructions}". Infer the location and business category from the request.`;
+  } else {
+    // Fallback (should be caught by UI validation)
+    throw new Error("Invalid search parameters");
+  }
+
   const prompt = `
-    Find EXACTLY ${params.limit} REAL, existing businesses related to "${params.keyword}" in ${params.city}, ${params.country}.
+    TASK: Find EXACTLY ${params.limit} REAL, existing businesses based on the following request:
     
+    "${searchContext}"
+
     CRITICAL INSTRUCTIONS:
     1. You MUST search using Google Maps and Google Search to find real, existing businesses.
     2. DO NOT invent or hallunicate contact information. If you cannot find a specific email or phone number for a business, write "N/A".

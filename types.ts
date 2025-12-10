@@ -3,6 +3,7 @@ export interface SearchParams {
   country: string;
   keyword: string;
   limit: number;
+  instructions?: string;
 }
 
 export interface Lead {
